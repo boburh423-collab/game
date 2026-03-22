@@ -1,0 +1,50 @@
+name: Yanissari Minorasi APK Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kodni yuklab olish
+        uses: actions/checkout@v4
+
+      - name: JDK 17 o'rnatish
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Gradle 8.5 o'rnatish
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+
+      - name: gradlew ruxsatini berish
+        run: chmod +x gradlew
+
+      - name: APK build (debug)
+        run: gradle assembleDebug --no-daemon
+
+      - name: APK ni saqlash
+        uses: actions/upload-artifact@v4
+        with:
+          name: YanissariMinorasi-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      - name: GitHub Release (faqat tag push da)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/debug/app-debug.apk
+          name: "Yanissari Minorasi ${{ github.ref_name }}"
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
